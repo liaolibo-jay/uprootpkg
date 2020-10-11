@@ -2,28 +2,28 @@ from __future__ import absolute_import, division, print_function
 import os 
 import warnings
 import random
-import uproot
-
+import uproot as ur
+import awkward1 as ak
 import numpy as np
 
 from energyflow.utils.data_utils import _get_filepath, _pad_events_axis1
 
 __all__ = ['load']
 
-def load(num_data=100000, generator='pythia', pad=True, with_bc=True, cache_dir='/home/liaolb/energyflow/dataset'):
+def load(num_data=10000, generator='pythia', pad=True, with_bc=True, cache_dir="/.energyflow/datasets"):
 
+    def_path = os.getenv('HOME')
     # obtain files
     Xs, ys = [], []
-    cache_dir = "/home/liaolb/energyflow/dataset"
+    cache_dir = def_path + cache_dir
     try:
-#        filename = "cepc_qq.npz" 
-        filename = "zqq.root"
+        filename = "hgg.root"
         fpath = cache_dir+"/"+filename 
         print(fpath)
     except Exception as e:
         print(str(e))
 
-    f = uproot.open(fpath)["cmb"] #open the tree
+    f = ur.open(fpath)["cmb"] #open the tree
     if f:
         print(f.show()) # show tuples
     
@@ -33,27 +33,17 @@ def load(num_data=100000, generator='pythia', pad=True, with_bc=True, cache_dir=
     PHI = f['PHI'].array()
     PDGID = f['PDGID'].array()
     BCL = f['BCL'].array()
+    print("------- load tupules successful --------")
 
     #------- combine 2-d arrays to a 3-d array -------
-    comb = np.array([energy,cosT,PHI,PDGID])
+    comb = np.array(ak.Array([energy,cosT,PHI,PDGID])) # transform awkward array to NumPy array
 
     #------- transpose the axis to y-z-x -------
     outcomb = comb.transpose((1,2,0))
-#    f = np.load(fpath)
+    
     print(f)
     Xs.append(outcomb)
     ys.append(BCL)
-
-#    try:
-#        filename = "cepc_cc.npz" 
-#        fpath = cache_dir+"/"+filename 
-#    except Exception as e:
-#        print(str(e))
-#
-#    f = np.load(fpath)
-#    Xs.append(f['X'])
-#    ys.append(f['Y'])
-#    f.close()
 
     # get X array
     if pad:
